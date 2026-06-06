@@ -1,5 +1,5 @@
-#ifndef compressao.h
-#define compressao.h
+#ifndef COMPRESSAO_H
+#define COMPRESSAO_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,36 +10,33 @@
 typedef struct no{
     void *byte; /*o ponteiro é generico e vai aceitar td tipo*/
     int frequencia; /*vai marcar quantas vzs o byte vai aparecer no arquivo e é o criterio de prioridade*/
-    struct no *proximo;/*aponta p prox nó da lista, vms usar p montar a heap*/
     struct no *esq;/*filho da esquerda - bit 0*/
     struct no *dir;/*filho da direita - bit 1*/
 }no;
 
 /*struct da lista encadeada ordenada*/
-typedef struct lista{
-    no *inicio;
+typedef struct heap{
+    no **dados;//array de ponteiros para nó
     int tamanho;
-}lista;
+    int capacidade;
+}heap;
 
-/*agr, uma struct q vai guardar o binario de cada byte e criar a tabela*/
-typedef struct tabela_huff{
-    void *byte; /*aqui vms chamar o caractere do qual o codigo se encontra*/
-    char codigo[TAM]; /*aqui temos a string q vai guardar o codigo binario, seu tamanho max é 256*/
-}tabela_huff;
 
 /*funcoes de leitura e frequencia*/
 void inicializa_tabela_com_zero(unsigned int *tab);
 void readfile(char *filename, unsigned int *frequencia);
 
-/*as funcoes da lista e do nó*/
-void criar_lista(lista *lista);/*aloca espaço e inicializa a lista*/
-void inserir_ordenado(lista *lista, no *novo_no);/*aqui atualizaremos a frequencia ou ent add um nó na lista, se o byte ja existe, add frequencia. se ele nn existir, cria um nó e o **head indica q pode modificar o inicio da lista, se for preciso*/
-void preencher_lista_ordenada(lista *lista, unsigned int *tab_frequencia);/*preenche a lista com os bytes e suas frequencias*/
-no *remove_inicio_lista(lista *lista);/*remove e retorna o primeiro no da lista*/
+/*as funcoes da heap e do nó*/
+heap *criar_heap(int capacidade);/*aloca espaço e inicializa a heap*/
+void sobe(heap *h, int i);/*aqui atualizaremos a frequencia ou ent add um nó na lista, se o byte ja existe, add frequencia. se ele nn existir, cria um nó e o **head indica q pode modificar o inicio da lista, se for preciso*/
+void heap_insere(heap *h, no *novo_no);/*preenche a heap com os bytes e suas frequencias*/
+no *heap_retira_min(heap *h);/*remove e retorna o primeiro no da heap*/
 
 /*funcoes da arvore*/
-no *montar_arvore(lista *lista);/*enquanto a heap tiver mais de um elemento vai retirar os dois de menor frequencia e cria um nó pai com a frequencia, no final, retorna a raiz. vai unir os nos da heap p formar a arvore final*/
+no *montar_arvore(heap *h);/*enquanto a heap tiver mais de um elemento vai retirar os dois de menor frequencia e cria um nó pai com a frequencia, no final, retorna a raiz. vai unir os nos da heap p formar a arvore final*/
 int altura_arvore(no *raiz);/*calcula a altura da arvore*/
+void preencher_heap(heap *h, unsigned int *tab_frequencia);
+void desce(heap *h, int i);
 void liberar_arvore(no *raiz);/*limpa a arvore da memoria, percorre a arvore em pós ordem e da esse free*/
 
 /*funcoes do dicionario*/
