@@ -38,6 +38,7 @@ int altura_arvore(no *raiz);/*calcula a altura da arvore*/
 void preencher_heap(heap *h, unsigned int *tab_frequencia);
 void desce(heap *h, int i);
 void liberar_arvore(no *raiz);/*limpa a arvore da memoria, percorre a arvore em pós ordem e da esse free*/
+void liberar_heap(heap *h);
 
 /*funcoes do dicionario*/
 char **aloca_dicionario(int colunas);/*aloca dinamicamente a matriz do dicionario*/
