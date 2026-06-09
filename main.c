@@ -53,6 +53,16 @@ int main()
         gerar_dicionario(arvore, dicionario, 0, caminho_temporario);
         free(caminho_temporario);
 
+        //e o que acontece se a frequencia é de apenas um caractere? por exemplo, e se um arquivo txt tiver apenas o mesmo caractere? 
+        //aqui resolvemos isso. basicamente se tiver apenas a raiz (se não há folhas), ainda constamos o caractere como byte valido
+        //e colocamos no dicionario!!!
+        if (arvore->esq == NULL && arvore->dir == NULL) 
+        {
+            //unsigned char é basicamente um caractere positivo 
+            unsigned char c = *(unsigned char *)(arvore->byte);
+            strcpy(dicionario[c], "0");
+        }
+
         compactar(dicionario, nome_arquivo, arvore, tab_frequencia);
 
         liberar_heap(h);

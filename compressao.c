@@ -314,7 +314,17 @@ void compactar(char **dicionario, char *nome_arquivo, no *arvore, unsigned int *
 
     //nome da saida para .huff
     char nome_saida[256];
-    sprintf(nome_saida, "%s.huff", nome_arquivo);
+    strncpy(nome_saida, nome_arquivo, sizeof(nome_saida) - 1);
+    nome_saida[sizeof(nome_saida) - 1] = '\0';
+
+    //pegar o ponto anterior a .huff
+    char *ponto = strrchr(nome_saida, '.'); //funcao strrchr: procura a primeira aparicao de algum caractere determinado na string
+    if (ponto != NULL) 
+    {
+        *ponto = '\0'; //ou seja, não há, não precisaremos tirar
+    }
+    //função strncat: o tipo original do nosso arquivo será descartado pois limita o tamanho do nome 
+    strncat(nome_saida, ".huff", sizeof(nome_saida) - strlen(nome_saida) - 1);
 
     //abre o arquivo de saida em escrita binaria
     FILE *saida = fopen(nome_saida, "wb");
