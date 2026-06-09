@@ -59,6 +59,10 @@ Para compactar, informe o nome do arquivo original (ex: `texto.txt`). O arquivo 
 
 ## Equipe Desenvolvedora
 
-```
-Este projeto foi realizado pelo seguinte discente:
-```
+```Este projeto foi realizado pelas seguintes discentes:
+Ana Carolina Cavalcante de Jesus
+
+Maria Luisa Silva Nunes de Souza
+
+Sophia Byernes Carvalho Duarte
+
