@@ -47,7 +47,11 @@ heap *criar_heap(int capacidade)
 
     //aloca o array de ponteiros para nós 
     nova_heap->dados = (no **)malloc(sizeof(no *) * capacidade);
-    if (nova_heap->dados == NULL) { printf("Erro ao alocar array da heap.\n"); exit(1); }
+    if(nova_heap->dados == NULL)
+    {
+        printf("Erro ao alocar array da heap.\n");
+        exit(1);
+    }
 
     nova_heap->tamanho = 0;// heap começa vazia
     nova_heap->capacidade = capacidade; // guarda o limite máximo            
