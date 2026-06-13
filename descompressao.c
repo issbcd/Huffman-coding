@@ -4,43 +4,42 @@
 #include <stdlib.h>
 #include <string.h>
 
-/*Para a descompactação precisamos:
-abrir o arquivo compactado
-ler o cabeçalho e extrair o tamanho do lixo e o tamanho da arvore
-reconstruir a arvore
-ler os bytes restantes navegando pela arvore ate mapear as "letras" originais
-salvar o arquivo descompactado
-*/
+/**
+ * @file descompressao.c
+ * @brief Implementação das funções responsáveis pela reconstrução da árvore de Huffman e decodificação do arquivo compactado.
+ */
 
-/*-------------------parte 6: decodificar e salvar arquivo--------------------*/
+/*------------------- PARTE 6: DECODIFICAR E SALVAR ARQUIVO --------------------*/
 
-/*aqui a gente le a sequencia em pre ordem e reconstrói a arvore*/
+/**
+ * Reconstrói a árvore de Huffman recursivamente a partir da sequência gravada em pré-ordem no arquivo.
+ * * @param entrada Ponteiro para o arquivo compactado (.huff) posicionado no início da árvore.
+ * @param bytes_arvore Ponteiro para o contador de controle de bytes restantes da árvore.
+ * @return no* Ponteiro para a raiz da subárvore ou árvore reconstruída. Retorna NULL ao finalizar os bytes.
+ */
 no* reconstruir_arvore(FILE *entrada, int *bytes_arvore){
-    if(*bytes_arvore <= 0) //caso base: se todos os bytes da arvore foram lidos, interrompe
+    if(*bytes_arvore <= 0) 
     {
         return NULL;
     }
     
-    //le o proximo caractere do arquivo para identificar o prox no
     int caracter = fgetc(entrada);
-    (*bytes_arvore)--; //diminui o contador, ja que foi lido um byte
+    (*bytes_arvore)--; 
     
-    if(caracter == '\\') //se o caracter for barra invertida o carctere "real" é o proximo
+    if(caracter == '\\') 
     {
-        caracter = fgetc(entrada); //pega o proximo caractere
-        (*bytes_arvore)--; //diminui o contador, ja que foi lido mais um byte
+        caracter = fgetc(entrada); 
+        (*bytes_arvore)--; 
     }
-
     else if(caracter == '*'){
-        //se o caractere for '*' é um no interno
-        no *pai = (no*)malloc(sizeof(no)); //aloca espaço para no interno/pai
+        no *pai = (no*)malloc(sizeof(no)); 
         if(pai == NULL)
         {
             printf("Erro ao alocar no pai na reconstrucao.\n");
             exit(1);
         }
 
-        pai->byte = (unsigned char*)malloc(sizeof(unsigned char)); //aloca espaço para o caractere
+        pai->byte = (unsigned char*)malloc(sizeof(unsigned char)); 
         if(pai->byte == NULL) 
         {
             printf("Erro ao alocar byte pai na reconstrucao.\n");
@@ -48,31 +47,31 @@ no* reconstruir_arvore(FILE *entrada, int *bytes_arvore){
         }
         *(unsigned char*)(pai->byte) = '*';
         pai->frequencia = 0;
-
         pai->esq = NULL;
         pai->dir = NULL;
 
-        /*passo recursivo, o filho a esquerda é reconstruido primeiro e continua a leitura do arquivo
-        apos terminar o esquerdo faz a recursao a direita*/
         pai->esq = reconstruir_arvore(entrada, bytes_arvore);
         pai->dir = reconstruir_arvore(entrada, bytes_arvore);
 
-        return pai; //retorna o pai com seus filhos
+        return pai; 
     }
 
-    /*se passou pelos if's é uma folha, o caracter representa uma letra original do alfabeto*/
-    no *folha = (no*)malloc(sizeof(no)); //aloca espaço para a folha
-    folha->byte = malloc(sizeof(unsigned char)); //aloca espaço para o caractere
-    //armazena o caractere na folha
-    *(unsigned char*)(folha->byte) = (unsigned char)caracter; //converte o caractere para unsigned char
-    folha->frequencia = 0; //frequencia e NULL são definidos
-    folha->esq = NULL; //é folha
-    folha->dir = NULL; //é folha
+    no *folha = (no*)malloc(sizeof(no)); 
+    folha->byte = malloc(sizeof(unsigned char)); 
+    
+    *(unsigned char*)(folha->byte) = (unsigned char)caracter; 
+    folha->frequencia = 0; 
+    folha->esq = NULL; 
+    folha->dir = NULL; 
 
-    return folha; //retorna a folha
+    return folha; 
 }
 
-/*abre o arquivo e faz as operações bitwise para extrair os dados do cabeçalho e decodificar o arquivo*/
+/**
+ * Abre o arquivo compactado, extrai os metadados do cabeçalho via operações bitwise,
+ * reconstrói a árvore e decodifica a sequência de bits salvando o arquivo original de volta.
+ * * @param arquivo_huff String contendo o caminho ou nome do arquivo comprimido (.huff).
+ */
 void decodificar_arquivo(char *arquivo_huff){
     FILE *entrada = fopen(arquivo_huff, "rb");
     if(entrada == NULL) {
@@ -83,16 +82,15 @@ void decodificar_arquivo(char *arquivo_huff){
     unsigned char byte1 = fgetc(entrada);
     unsigned char byte2 = fgetc(entrada);
 
-    //bitwise - extração dos dados do cabeçalho
-    int tamanho_lixo = byte1 >> 5; //desloca o primeiro byte 5 posiçoes a direita, isolando os 3 bits que indicam o tamanho do lixo
-    int tamanho_arvore = ((byte1 & 31) << 8) | byte2; //aplica mascara de 31 (00011111) no byte 1 para limpar os bits do lixo e desloca os 5 bits restantes 8 posicoes para a esquerda, faz a operação "ou" que resulta no tamanho da arvore
+    int tamanho_lixo = byte1 >> 5; 
+    int tamanho_arvore = ((byte1 & 31) << 8) | byte2; 
 
-    int contador_arvore = tamanho_arvore; //variavel de controle
-    no *raiz_arvore = reconstruir_arvore(entrada, &contador_arvore); //reconstroi a arvore
+    int contador_arvore = tamanho_arvore; 
+    no *raiz_arvore = reconstruir_arvore(entrada, &contador_arvore); 
 
     char nome_saida[256];
     strncpy(nome_saida, arquivo_huff, strlen(arquivo_huff) - 5); 
-    nome_saida[strlen(arquivo_huff) - 5] = '\0'; //adiciona o terminador nulo
+    nome_saida[strlen(arquivo_huff) - 5] = '\0'; 
     
     FILE *saida = fopen(nome_saida, "wb");
     if (saida == NULL) {
@@ -100,17 +98,16 @@ void decodificar_arquivo(char *arquivo_huff){
         fclose(entrada);
         exit(1);
     }
-    /*decodificação dos bits*/
-    no *atual = raiz_arvore; //ponteiro auxiliar para percorrer a arvore
+
+    no *atual = raiz_arvore; 
     int prox_bit = fgetc(entrada);
     int byte_lido;
 
     while((byte_lido = prox_bit) != EOF){
-        prox_bit = fgetc(entrada);//tenta ler o bit seguinte para verificar se o atual é o ultimo
+        prox_bit = fgetc(entrada);
 
         int limite_bits;
         if(prox_bit == EOF){
-            //se for o ultimo byte do arquivo, processa somente os bits q nao sao lixo
             limite_bits = 8 - tamanho_lixo;
         }
         else{
@@ -124,19 +121,19 @@ void decodificar_arquivo(char *arquivo_huff){
             }
             else
             {
-                atual = atual->esq;
+                atual = atual->esq; 
             }
+            
             if(atual->esq == NULL && atual->dir == NULL){
                 fputc(*(unsigned char*)(atual->byte), saida);
                 atual = raiz_arvore;
             }
         }
-        
     }
+    
     printf("Arquivo descompactado com sucesso! Gerado: %s\n", nome_saida);
     fclose(entrada);
     fclose(saida);
-    liberar_arvore(raiz_arvore);
-
     
+    liberar_arvore(raiz_arvore);
 }

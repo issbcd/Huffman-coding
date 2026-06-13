@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #define TAM 256
 
-/*------------------- funcoes --------------------*/
-
-/*-------------------parte 1: funções para leitura e tabela de frequencia--------------------*/
+/**
+ * Inicializa todas as posições da tabela de frequência com o valor zero.
+ * * @param tab Ponteiro para o array (tabela) de frequências de tamanho TAM.
+ */
 void inicializa_tabela_com_zero(unsigned int *tab) 
 {
     for (int i = 0; i < TAM; i++) 
@@ -17,7 +17,12 @@ void inicializa_tabela_com_zero(unsigned int *tab)
     }
 }
 
-void readfile(char *filename, unsigned int *frequencia)  //leitura do arquivo
+/**
+ * Lê um arquivo binário e contabiliza a frequência de ocorrência de cada byte.
+ * * @param filename O nome ou caminho do arquivo a ser lido.
+ * @param frequencia Ponteiro para a tabela onde as frequências serão acumuladas.
+ */
+void readfile(char *filename, unsigned int *frequencia)
 {
     FILE *arquivo = fopen(filename, "rb"); 
     
@@ -35,7 +40,12 @@ void readfile(char *filename, unsigned int *frequencia)  //leitura do arquivo
     fclose(arquivo);
 }
 
-/*-------------------parte dois: funções para heap--------------------*/
+
+/**
+ * Aloca e inicializa uma estrutura de Min-Heap com uma capacidade definida.
+ * * @param capacidade O número máximo de elementos que a heap pode suportar.
+ * @return heap* Ponteiro para a estrutura da heap criada.
+ */
 heap *criar_heap(int capacidade)
 {
     heap *nova_heap = (heap*)malloc(sizeof(heap));
@@ -45,7 +55,6 @@ heap *criar_heap(int capacidade)
         printf("Erro ao alocar heap.\n"); exit(1); 
     }
 
-    //aloca o array de ponteiros para nós 
     nova_heap->dados = (no **)malloc(sizeof(no *) * capacidade);
     if(nova_heap->dados == NULL)
     {
@@ -53,30 +62,46 @@ heap *criar_heap(int capacidade)
         exit(1);
     }
 
-    nova_heap->tamanho = 0;// heap começa vazia
-    nova_heap->capacidade = capacidade; // guarda o limite máximo            
+    nova_heap->tamanho = 0;
+    nova_heap->capacidade = capacidade;            
 
     return nova_heap;
 }
 
+/**
+ * Desloca um elemento para cima (Up-Heap) para manter a propriedade da Min-Heap.
+ * Utilizado logo após a inserção de um novo nó.
+ * * @param h Ponteiro para a heap.
+ * @param i Índice do elemento que precisa subir.
+ */
 void sobe(heap *h, int i) 
 {
     while(i > 0 && h->dados[i]->frequencia < h->dados[(i-1)/2]->frequencia){
-        // troca filho com pai
         no *aux = h->dados[i];
         h->dados[i] = h->dados[(i-1)/2];
         h->dados[(i-1)/2] = aux;
-        i = (i-1)/2;   // sobe para a posição do pai
+        i = (i-1)/2;
     }
 }
 
+/**
+ * Insere um novo nó na Min-Heap e reorganiza sua estrutura.
+ * * @param h Ponteiro para a heap.
+ * @param novo_no Ponteiro para o nó da árvore de Huffman a ser inserido.
+ */
 void heap_insere(heap *h, no *novo_no)
- {
-    h->dados[h->tamanho] = novo_no; //insere no final
-    sobe(h, h->tamanho); //sobe até a posição certa
+{
+    h->dados[h->tamanho] = novo_no;
+    sobe(h, h->tamanho);
     h->tamanho++;
 }
 
+/**
+ * Varre a tabela de frequências e insere todos os caracteres que apareceram 
+ * no arquivo (frequência > 0) dentro da Min-Heap.
+ * * @param h Ponteiro para a heap.
+ * @param tab_frequencia Ponteiro para a tabela de frequências populada.
+ */
 void preencher_heap(heap *h, unsigned int *tab_frequencia)
 {
     for(int i = 0; i < TAM; i++){
@@ -93,10 +118,11 @@ void preencher_heap(heap *h, unsigned int *tab_frequencia)
             novo_no->byte = malloc(sizeof(unsigned char));
             if(novo_no->byte == NULL)
             {
-                printf("Erro de alocação.\n"); exit(1);
+                printf("Erro de alocação.\n");
+                exit(1);
             }
 
-            *(unsigned char *)(novo_no->byte) = (unsigned char)i; //armazena o byte
+            *(unsigned char *)(novo_no->byte) = (unsigned char)i;
             novo_no->frequencia = tab_frequencia[i];
             novo_no->esq = NULL;
             novo_no->dir = NULL;
@@ -106,32 +132,41 @@ void preencher_heap(heap *h, unsigned int *tab_frequencia)
     }
 }
 
-/*---------------------parte 3: montar arvore de huffman--------------------*/ 
+
+/**
+ * Desloca um elemento para baixo (Down-Heap) para manter a propriedade da Min-Heap.
+ * Utilizado logo após a remoção do elemento mínimo (raiz da heap).
+ * * @param h Ponteiro para a heap.
+ * @param i Índice do elemento que precisa descer.
+ */
 void desce(heap *h, int i)
 {
-    int menor = i;// assume que o pai é o menor por enquanto      
-    int esq = 2 * i + 1; // índice do filho esquerdo                     
-    int dir = 2 * i + 2; //índice do filho direito                      
+    int menor = i;      
+    int esq = 2 * i + 1;                     
+    int dir = 2 * i + 2;                      
 
-    /* verifica se o filho esquerdo existe E é menor que o atual "menor"   */
     if(esq < h->tamanho && h->dados[esq]->frequencia < h->dados[menor]->frequencia){
         menor = esq;
     }
 
-    /* verifica se o filho direito existe E é menor que o atual "menor"     */
     if(dir < h->tamanho && h->dados[dir]->frequencia < h->dados[menor]->frequencia){
         menor = dir;
     }
 
-    /* se o menor não é mais o pai, troca e continua descendo               */
     if(menor != i)
     {
         no *aux       = h->dados[i];
         h->dados[i]   = h->dados[menor];
         h->dados[menor] = aux;
-        desce(h, menor);    /* chamada recursiva na nova posição            */
+        desce(h, menor);
     }
 }
+
+/**
+ * Remove e retorna o nó com a menor frequência presente na Min-Heap.
+ * * @param h Ponteiro para a heap.
+ * @return no* Ponteiro para o nó de menor frequência retirado.
+ */
 no *heap_retira_min(heap *h){
     no *minimo  = h->dados[0];         
     h->tamanho--;
@@ -142,17 +177,17 @@ no *heap_retira_min(heap *h){
     return minimo;
 }
 
-//retorna a raiz da árvore
+/**
+ * Combina os nós da Min-Heap para construir a Árvore de Huffman.
+ * * @param h Ponteiro para a heap populada.
+ * @return no* Ponteiro para o nó raiz da Árvore de Huffman finalizada.
+ */
 no* montar_arvore(heap *h)
 {
-
-    //se tamanho for igual a 1, nao entra no while
-    /*chama a funcao remove_inicio_lista e faz oq se faz no while para um unico no*/
     if(h->tamanho == 1)
     {
         return heap_retira_min(h);
     }
-
 
     while(h->tamanho > 1){
         no *primeiro = heap_retira_min(h);
@@ -178,12 +213,16 @@ no* montar_arvore(heap *h)
         pai->dir = segundo;  
         
         heap_insere(h, pai); 
-
     }
     return heap_retira_min(h);
 }
-/*--------------parte quatro - montar dicionario-------------*/
-//no vídeo é sugerido que a gente faça uma matriz de strings para o dicionario, tendo como linhas 255(numeros da tabela ascii) e o numero de colunas = colunas da arvore +1
+
+
+/**
+ * Calcula a altura da Árvore de Huffman recursivamente.
+ * * @param raiz Ponteiro para a raiz da árvore (ou subárvore).
+ * @return int A altura da árvore. Retorna -1 se a árvore estiver vazia.
+ */
 int altura_arvore(no *raiz)
 {
     if(raiz == NULL) 
@@ -192,9 +231,9 @@ int altura_arvore(no *raiz)
     }
     else
     {
-        int esq = altura_arvore(raiz->esq);//chamada recursiva para esquerda
-        int dir = altura_arvore(raiz->dir);//chamada recursiva para direita
-        //retorna a maior altura entre os filhos, o maior caminho será a altura
+        int esq = altura_arvore(raiz->esq);
+        int dir = altura_arvore(raiz->dir);
+        
         if(esq > dir)
         {
             return esq + 1;
@@ -205,23 +244,24 @@ int altura_arvore(no *raiz)
         }
     }
 }
-/*aloca dinamicamente a matriz do dicionario
-linhas: TAM
-Colunas: altura da arvore + 1 (para o caracter '\0')
-*/ 
+
+/**
+ * Aloca dinamicamente uma matriz de caracteres (strings) para o dicionário.
+ * As linhas correspondem aos 256 possíveis caracteres ASCII/Bytes.
+ * * @param colunas O número de colunas (altura da árvore + 1 para o caractere '\0').
+ * @return char** Ponteiro para a matriz de strings alocada.
+ */
 char **aloca_dicionario(int colunas)
 {
-    //aloca o vetor de ponteiros(linhas)
-    char **dicionario = (char**) malloc(sizeof(char*) * TAM); //TAM representa o número de linhas
+    char **dicionario = (char**) malloc(sizeof(char*) * TAM); 
     if(dicionario == NULL)
     {
         printf("\nERRO DE ALOCAÇÃO DE MEMÓRIA.\n");
         exit(1);
     }
-    //aloca cada linha individualmente usando dicionario[i]
     for(int i = 0; i < TAM; i++)
     {
-       dicionario[i] = (char*)calloc(colunas, sizeof(char));//usamos calloc pois ele aloca a memoria e limpa para 0
+       dicionario[i] = (char*)calloc(colunas, sizeof(char));
        
        if(dicionario[i] == NULL)
        {
@@ -231,41 +271,48 @@ char **aloca_dicionario(int colunas)
     }
     return dicionario;
 }
-/*
-percorre a arvore recursivamente preenchendo o dicionario
-parametros
-nivel: controla a posicao(coluna) atual onde vamos inserir '0' ou '1'
-caminho: armazena a sequência de 0s e 1s
-*/
+
+/**
+ * Percorre a árvore de Huffman de forma recursiva, gerando e armazenando 
+ * os novos códigos binários de cada caractere na tabela hash/matriz do dicionário.
+ * * @param raiz Ponteiro para o nó atual da árvore.
+ * @param dicionario Matriz onde serão armazenadas as strings binárias resultantes.
+ * @param nivel Controla a coluna/posição atual da string 'caminho'.
+ * @param caminho Buffer de caracteres que armazena a sequência temporária de '0's e '1's.
+ */
 void gerar_dicionario(no *raiz, char **dicionario, int nivel, char *caminho)
 {
     if(raiz == NULL)
     {
         return;
     }
-    if(raiz->esq == NULL && raiz->dir == NULL) //é uma folha
+    if(raiz->esq == NULL && raiz->dir == NULL) 
     {
         caminho[nivel] = '\0';
         unsigned char caractere = *(unsigned char*)(raiz->byte);
-        strcpy(dicionario[caractere], caminho); //salva o codigo gerado na linha desse caractere dentro do dicionario
+        strcpy(dicionario[caractere], caminho); 
     }
-    else //não é folha, é um no interno
+    else 
     {
-        caminho[nivel] = '0'; //caminho para a esquerda: adiciona '0' na posição atual e avança o nivel para o próximo filho
+        caminho[nivel] = '0'; 
         gerar_dicionario(raiz->esq, dicionario, nivel + 1, caminho);
 
         caminho[nivel] = '1';
         gerar_dicionario(raiz->dir, dicionario, nivel + 1, caminho);    
     }
-   
 }
-/*para fazer o cabeçalho:*/
+
+/**
+ * Calcula o tamanho (em bytes) que a árvore ocupará no cabeçalho do arquivo compactado.
+ * Caracteres especiais de escape ('*' e '\') contam em dobro.
+ * * @param raiz Ponteiro para a raiz da árvore de Huffman.
+ * @return int O tamanho total em bytes necessário para mapear a árvore.
+ */
 int calcular_tamanho_arvore(no *raiz){
     if(raiz == NULL){
         return 0;  
     }
 
-    //se for uma folha
     if(raiz->esq == NULL && raiz->dir == NULL){
         unsigned char c = *(unsigned char*)(raiz->byte);
         
@@ -274,16 +321,19 @@ int calcular_tamanho_arvore(no *raiz){
         }
         return 1;
     }
-    return 1 + calcular_tamanho_arvore(raiz->esq) + calcular_tamanho_arvore(raiz->dir);   //retorna 1 + o tamanho da arvore esquerda + o tamanho da arvore direita
-   
+    return 1 + calcular_tamanho_arvore(raiz->esq) + calcular_tamanho_arvore(raiz->dir);
 }
 
+/**
+ * Escreve a estrutura da Árvore de Huffman no arquivo de saída utilizando o percurso em pré-ordem.
+ * * @param raiz Ponteiro para a raiz da árvore.
+ * @param saida Ponteiro do arquivo compactado (.huff) onde a árvore será gravada.
+ */
 void pre_ordem_arvore(no *raiz, FILE *saida){
     if(raiz == NULL){
         return; 
     }
     
-    //se for uma folha
     if(raiz->esq == NULL && raiz->dir == NULL){
         unsigned char c = *(unsigned char*)(raiz->byte);
         
@@ -291,46 +341,44 @@ void pre_ordem_arvore(no *raiz, FILE *saida){
         {
             fputc('\\', saida);
         }
-        
         fputc(c, saida);
     }
-    //se for nó interno
     else{
         fputc('*', saida);
         pre_ordem_arvore(raiz->esq, saida);
         pre_ordem_arvore(raiz->dir, saida);
-        
     }
-    
 }
-/*-----------------parte cinco- codificar(comprimir)---------------*/
 
-/*funcao que recebe dicionario e caminho do arquivo, abre o arquivo e aloca o espaço necessario na memoria e monta a string com os codigos concatenados*/
 
+/**
+ * Executa todo o processo de compactação de um arquivo: calcula os bits necessários, 
+ * define o tamanho do "lixo", grava os dois bytes de cabeçalho, exporta a árvore em pré-ordem
+ * e realiza a compressão bit a bit através de operações bitwise.
+ * * @param dicionario Matriz contendo as strings binárias mapeadas dos caracteres.
+ * @param nome_arquivo String contendo o nome/caminho do arquivo original.
+ * @param arvore Ponteiro para a raiz da árvore de Huffman.
+ * @param tab_frequencia Array contendo as frequências originais dos bytes.
+ */
 void compactar(char **dicionario, char *nome_arquivo, no *arvore, unsigned int *tab_frequencia)
 {
-    //abre o arquivo original para a leitura
     FILE *arquivo = fopen(nome_arquivo, "rb");
     if (arquivo == NULL) {
         printf("Erro ao abrir arquivo.\n");
         exit(1);
     }
 
-    //nome da saida para .huff
     char nome_saida[256];
     strncpy(nome_saida, nome_arquivo, sizeof(nome_saida) - 1);
     nome_saida[sizeof(nome_saida) - 1] = '\0';
 
-    //pegar o ponto anterior a .huff
-    char *ponto = strrchr(nome_saida, '.'); //funcao strrchr: procura a primeira aparicao de algum caractere determinado na string
+    char *ponto = strrchr(nome_saida, '.'); 
     if (ponto != NULL) 
     {
-        *ponto = '\0'; //ou seja, não há, não precisaremos tirar
+        *ponto = '\0'; 
     }
-    //função strncat: o tipo original do nosso arquivo será descartado pois limita o tamanho do nome 
     strncat(nome_saida, ".huff", sizeof(nome_saida) - strlen(nome_saida) - 1);
 
-    //abre o arquivo de saida em escrita binaria
     FILE *saida = fopen(nome_saida, "wb");
     if(saida == NULL)
     {
@@ -339,7 +387,6 @@ void compactar(char **dicionario, char *nome_arquivo, no *arvore, unsigned int *
         exit(1);
     }
      
-    //cabeçalho: calcular total de bits
     unsigned long long total_bits = 0;
     for(int i = 0; i < TAM; i++)
     {
@@ -347,7 +394,7 @@ void compactar(char **dicionario, char *nome_arquivo, no *arvore, unsigned int *
             total_bits += (unsigned long long)tab_frequencia[i] * (strlen(dicionario[i]));
         }
     }
-    //calcular lixo
+
     int lixo;
     if(total_bits % 8 == 0)
     {
@@ -355,17 +402,13 @@ void compactar(char **dicionario, char *nome_arquivo, no *arvore, unsigned int *
     }
     else
     {
-        lixo = 8 - (total_bits % 8);//quantos bits sobram para fechar o ultimp byte
+        lixo = 8 - (total_bits % 8);
     }
 
     int tamanho_arvore = calcular_tamanho_arvore(arvore);
-    /*
-    montar dois bytes do cabeçalhp
-    byte1: lixo
-    byte2: arvore
-    */
-    unsigned char byte1 = (lixo << 5) | (tamanho_arvore >> 8); //funcao ou em bits
-    unsigned char byte2 = tamanho_arvore & 255; //pega os ultimos 8 bits //funcao e em bits
+
+    unsigned char byte1 = (lixo << 5) | (tamanho_arvore >> 8); 
+    unsigned char byte2 = tamanho_arvore & 255; 
 
     fputc(byte1, saida);
     fputc(byte2, saida);
@@ -373,18 +416,16 @@ void compactar(char **dicionario, char *nome_arquivo, no *arvore, unsigned int *
     pre_ordem_arvore(arvore, saida);
     
     int bytelido;
-    unsigned char byte_buffer = 0;//acumulador em que vmos montando os 8 bits
-    int contador_bits = 0; //controla quantos bits já foram acumulados em byte_buffer
+    unsigned char byte_buffer = 0;
+    int contador_bits = 0; 
 
     rewind(arquivo);
-    //le o arquivo original caracter por caracter
-    while((bytelido = fgetc(arquivo))!=EOF){
-        char *codigo = dicionario[bytelido]; //acessa a string de '0' e '1' no dicionario para esse byte
+    while((bytelido = fgetc(arquivo)) != EOF){
+        char *codigo = dicionario[bytelido]; 
 
-        //percorre cada bit da string do codigo do dicionario
-        for(int i = 0; codigo[i]!= '\0'; i++){
+        for(int i = 0; codigo[i] != '\0'; i++){
            if(codigo[i] == '1'){
-                byte_buffer = byte_buffer | (1 << (7 - contador_bits)); //se o caracter for '1', liga o bit na posicao correta do buffer usando bitwise
+                byte_buffer = byte_buffer | (1 << (7 - contador_bits)); 
            }
            contador_bits++;
            if(contador_bits == 8){
@@ -398,16 +439,17 @@ void compactar(char **dicionario, char *nome_arquivo, no *arvore, unsigned int *
     if(contador_bits > 0){
         fputc(byte_buffer, saida);
     }
-
     
     printf("arquivo compactado, arquivo gerado: %s\n", nome_saida);
     fclose(saida);
     fclose(arquivo);
-    
 }
 
-
-// Libera recursivamente toda a memória ocupada pela árvore de Huffman
+/**
+ * Desaloca recursivamente toda a memória ocupada pela árvore de Huffman 
+ * para prevenir vazamentos de memória (memory leaks).
+ * * @param raiz Ponteiro para a raiz da árvore (ou subárvore) que será limpa.
+ */
 void liberar_arvore(no *raiz)
 {
     if (raiz == NULL) return;
@@ -418,9 +460,13 @@ void liberar_arvore(no *raiz)
     }
     free(raiz);
 }
+
+/**
+ * Libera a memória da estrutura da heap e de seu array interno de dados.
+ ** @param h Ponteiro para a heap que será limpa.
+ */
 void liberar_heap(heap *h)
 {
-    free(h->dados);  //libera o array de ponteiros                         
-    free(h);         //libera a struct heap em si                          
+    free(h->dados);                           
+    free(h);                                   
 }
-
