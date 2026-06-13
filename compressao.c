@@ -365,7 +365,7 @@ void compactar(char **dicionario, char *nome_arquivo, no *arvore, unsigned int *
     byte2: arvore
     */
     unsigned char byte1 = (lixo << 5) | (tamanho_arvore >> 8); //funcao ou em bits
-    unsigned char byte2 = tamanho_arvore & 0xFF; //pega os ultimos 8 bits //funcao e em bits
+    unsigned char byte2 = tamanho_arvore & 255; //pega os ultimos 8 bits //funcao e em bits
 
     fputc(byte1, saida);
     fputc(byte2, saida);

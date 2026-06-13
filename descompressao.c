@@ -71,6 +71,7 @@ no* reconstruir_arvore(FILE *entrada, int *bytes_arvore){
 
     return folha; //retorna a folha
 }
+
 /*abre o arquivo e faz as operações bitwise para extrair os dados do cabeçalho e decodificar o arquivo*/
 void decodificar_arquivo(char *arquivo_huff){
     FILE *entrada = fopen(arquivo_huff, "rb");
@@ -90,7 +91,7 @@ void decodificar_arquivo(char *arquivo_huff){
     no *raiz_arvore = reconstruir_arvore(entrada, &contador_arvore); //reconstroi a arvore
 
     char nome_saida[256];
-    strncpy(nome_saida, arquivo_huff, strlen(arquivo_huff) - 5); //substitui o .huff por .descompactado
+    strncpy(nome_saida, arquivo_huff, strlen(arquivo_huff) - 5); 
     nome_saida[strlen(arquivo_huff) - 5] = '\0'; //adiciona o terminador nulo
     
     FILE *saida = fopen(nome_saida, "wb");
